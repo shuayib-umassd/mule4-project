@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="get-covid-reportFlow" doc:id="7e8706d9-fa77-47a7-bf24-60d49f1ce9d1" >
+		<http:listener doc:name="Listener" doc:id="ca9f0e9f-bfce-499d-8a2f-e51e4e719c85" config-ref="HTTP_Listener_Global_Config" path="v1/reports"/>
+		<logger level="INFO" doc:name="Logger" doc:id="afe06ce1-957f-4ebb-8c13-f0171eb55c2e" message="#[attributes.queryParams.state]"/>
+		<set-variable value="#[payload.firstName]" doc:name="Set Variable" doc:id="8d6aef5e-ff5e-4b70-9031-65cc6ba518ab" variableName="userName"/>
+		<logger level="INFO" doc:name="Logger" doc:id="34bc5e86-2551-40d4-af45-6a936fead3e9" />
+	</flow>
+</mule>
