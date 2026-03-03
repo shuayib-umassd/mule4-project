@@ -2,6 +2,24 @@
   "sampleData": {
     "74e39c15-04e2-4671-acce-5902b6bf8402": {
       "payload": "sample_data/json.json"
+    },
+    "0f777c66-89cb-46e7-8142-57f0718fb7c7": {
+      "payload": "sample_data/json_1.json"
+    },
+    "c1da8e65-cc49-4691-be6c-c25536dd4c91": {
+      "payload": "sample_data/covidcase.xml"
+    },
+    "68a144aa-d61a-4056-9e86-bf335f5cfd2a": {
+      "payload": "sample_data/json_2.json"
+    },
+    "1c77d7b0-212b-424b-92d9-78ee2e4b88c3": {
+      "payload": "sample_data/json_3.json"
+    },
+    "9ca9c12b-a9c4-4d46-837f-f2cb3cba74ed": {
+      "payload": "sample_data/json_4.json"
+    },
+    "f67d9ef0-4d56-4ed1-9a22-fa94dcbc5abb": {
+      "payload": "sample_data/covidCase_1.xml"
     }
   }
 }

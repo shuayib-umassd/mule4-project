@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="dw-selector-flow" doc:id="c69099ee-0e7b-4657-89d2-666f1a86db33" >
+		<ee:transform doc:name="Transform Message" doc:id="0f777c66-89cb-46e7-8142-57f0718fb7c7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	indexselector: payload[0],
+	singleValueSelector: payload[0].source,
+	multiValueSelector: payload.*source,
+	rangeSelector: payload [0 to 1]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="dw-xml-flow" doc:id="7e2329fb-c440-4ae4-a8fd-09278f495f81" >
+		<ee:transform doc:name="Transform Message" doc:id="c1da8e65-cc49-4691-be6c-c25536dd4c91" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	indexselector: payload.covidCases.*covidCase[0],
+	xmlNameSpaceSelector: payload.covidCases.*covidCase[0].source.@id,
+	singleValueSelector:payload.covidCases.*covidCase[1],
+	multiValueSelector:payload.covidCases.*covidCase.source,
+   rangeSelector:payload.covidCases.*covidCase[0 to 2] 
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="dw-datatypes-flow" doc:id="830ea767-ff1d-41d9-b805-65bf43824c77" >
+		<ee:transform doc:name="Transform Message" doc:id="68a144aa-d61a-4056-9e86-bf335f5cfd2a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	myString: "Hello World!",
+	myNumber: 3445,
+	myFloatingPointNumber: 6734.35,
+	myDate: |2026-02-28|,
+	myTime: |12:45:34|,
+	myDateTime: |2026-02-28T14:38:44.0098557-05:00|,
+	myMixedArray:[3,45,6,"blah",{hello: "there"}],
+	mule: mule.version,
+	app: app.encoding,
+	server: server.timeZone,
+	flow: flow.name,
+	zipCode: payload.address.postal
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="dw-type-coercion" doc:id="362c74f8-1a84-40e7-82df-a3eb04c65888" >
+		<ee:transform doc:name="Transform Message" doc:id="1c77d7b0-212b-424b-92d9-78ee2e4b88c3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	dob: payload.dateOfBirth as Date {format: "yyyy/MM/dd"},
+	dateNow: now() as Date,
+	timeNow: now() as Time,
+    MonthNow: now() as String {format: "MMMM"},
+	//dayNow: now() as String {format: ""}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

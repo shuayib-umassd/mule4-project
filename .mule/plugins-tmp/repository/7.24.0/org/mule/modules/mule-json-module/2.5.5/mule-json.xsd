@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:mule="http://www.mulesoft.org/schema/mule/core" xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.mulesoft.org/schema/mule/json" attributeFormDefault="unqualified" elementFormDefault="qualified">
+  <xs:import namespace="http://www.w3.org/XML/1998/namespace"></xs:import>
+  <xs:import namespace="http://www.mulesoft.org/schema/mule/core" schemaLocation="http://www.mulesoft.org/schema/mule/core/current/mule.xsd"></xs:import>
+  <xs:element xmlns:mule="http://www.mulesoft.org/schema/mule/core" substitutionGroup="mule:abstract-shared-extension" name="config">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="mule:abstractExtensionType">
+          <xs:annotation>
+            <xs:documentation>Default configuration</xs:documentation>
+          </xs:annotation>
+          <xs:sequence minOccurs="0" maxOccurs="1"></xs:sequence>
+          <xs:attribute type="xs:string" use="required" name="name">
+            <xs:annotation>
+              <xs:documentation>The identifier of this element used to reference it in other components</xs:documentation>
+            </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element xmlns="http://www.mulesoft.org/schema/mule/json" xmlns:mule="http://www.mulesoft.org/schema/mule/core" type="ValidateSchemaType" substitutionGroup="mule:abstract-operator" name="validate-schema">
+    <xs:annotation>
+      <xs:documentation>Validates that the input content is compliant with a given schema. This operation supports referencing many schemas (using comma as a separator) which include each other.</xs:documentation>
+    </xs:annotation>
+  </xs:element>
+  <xs:complexType name="ValidateSchemaType">
+    <xs:complexContent>
+      <xs:extension xmlns:mule="http://www.mulesoft.org/schema/mule/core" base="mule:abstractOperatorType">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+          <xs:element type="xs:string" minOccurs="0" maxOccurs="1" name="content">
+            <xs:annotation>
+              <xs:documentation>the json document to be validated</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+          <xs:element minOccurs="0" maxOccurs="1" name="schema-redirects">
+            <xs:annotation>
+              <xs:documentation>Allows to redirect any given URI in the Schema (or even the schema location itself) to any other specific URI. The most common use case for this feature is to map external namespace URIs without the need to a local resource</xs:documentation>
+            </xs:annotation>
+            <xs:complexType>
+              <xs:sequence>
+                <xs:element xmlns:json="http://www.mulesoft.org/schema/mule/json" minOccurs="0" maxOccurs="unbounded" ref="json:abstract-schema-redirect"></xs:element>
+              </xs:sequence>
+            </xs:complexType>
+          </xs:element>
+          <xs:element type="xs:string" minOccurs="0" maxOccurs="1" name="contents">
+            <xs:annotation>
+              <xs:documentation>The content of the schema to validate in text format.</xs:documentation>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+        <xs:attribute type="mule:expressionList" use="optional" name="schemaRedirects">
+          <xs:annotation>
+            <xs:documentation>Allows to redirect any given URI in the Schema (or even the schema location itself) to any other specific URI. The most common use case for this feature is to map external namespace URIs without the need to a local resource</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute xmlns="http://www.mulesoft.org/schema/mule/json" type="org.mule.module.json.api.JsonSchemaDereferencingModeEnumType" use="optional" default="CANONICAL" name="dereferencing">
+          <xs:annotation>
+            <xs:documentation>Draft v4 defines two dereferencing modes: canonical and inline. CANONICAL is the default option, you can also specify INLINE. This field affects only when you use Draft v4.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute type="mule:expressionBoolean" use="optional" default="true" name="allowDuplicateKeys">
+          <xs:annotation>
+            <xs:documentation>if true, the validator will allow duplicate keys, otherwise it will fail.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute type="mule:substitutableBoolean" use="optional" default="false" name="allowArbitraryPrecision">
+          <xs:annotation>
+            <xs:documentation>if true, the validator will use arbitrary precision when reading floating point values, otherwise double precision will be used.</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+        <xs:attribute type="mule:expressionString" use="optional" name="schema">
+          <xs:annotation>
+            <xs:documentation>The location in which the schema to validate against is to be found. This attribute supports URI representations such as "http://org.mule/schema.json" or "resource:/schema.json". It also supports a most common classpath reference such as simply "schema.json".</xs:documentation>
+          </xs:annotation>
+        </xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:complexType name="org.mule.module.json.api.SchemaRedirect">
+    <xs:complexContent>
+      <xs:extension xmlns:mule="http://www.mulesoft.org/schema/mule/core" base="mule:abstractExtensionType">
+        <xs:attribute type="mule:expressionString" use="required" name="from"></xs:attribute>
+        <xs:attribute type="mule:expressionString" use="required" name="to"></xs:attribute>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+  <xs:element xmlns:json="http://www.mulesoft.org/schema/mule/json" type="json:org.mule.module.json.api.SchemaRedirect" abstract="true" name="abstract-schema-redirect"></xs:element>
+  <xs:element xmlns:json="http://www.mulesoft.org/schema/mule/json" substitutionGroup="json:abstract-schema-redirect" name="schema-redirect">
+    <xs:complexType>
+      <xs:complexContent>
+        <xs:extension base="json:org.mule.module.json.api.SchemaRedirect"></xs:extension>
+      </xs:complexContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:simpleType name="org.mule.module.json.api.JsonSchemaDereferencingModeEnumType">
+    <xs:union>
+      <xs:simpleType>
+        <xs:restriction base="xs:string">
+          <xs:enumeration value="CANONICAL"></xs:enumeration>
+          <xs:enumeration value="INLINE"></xs:enumeration>
+        </xs:restriction>
+      </xs:simpleType>
+      <xs:simpleType>
+        <xs:restriction xmlns:mule="http://www.mulesoft.org/schema/mule/core" base="mule:propertyPlaceholderType"></xs:restriction>
+      </xs:simpleType>
+    </xs:union>
+  </xs:simpleType>
+</xs:schema>

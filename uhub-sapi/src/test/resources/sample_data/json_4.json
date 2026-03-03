@@ -1,0 +1,18 @@
+{
+  "source": "Hospital",
+  "caseType": "positive",
+  "firstName": "Abbie",
+  "lastName": "Smithers",
+  "phone": "(621)-652-1920",
+  "email": "Alysia.Davson@gmail.com",
+  "dateOfBirth": "02-12-1988",
+  "nationalID": "8fab52aaa58443ffb62",
+  "nationalIDType": "877-43-9087",
+  "address": {
+    "streetAddress": "minima",
+    "city": "San Diego",
+    "state": "California",
+    "postal": "6546",
+    "country": "Ecuador"
+  }
+}

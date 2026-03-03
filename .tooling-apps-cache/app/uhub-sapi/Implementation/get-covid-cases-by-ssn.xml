@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="get-covid-cases-by-national-idFlow" doc:id="ff7c1035-fec0-4127-a9ec-be6605a2f6e4" >
+		<http:listener doc:name="Listener" doc:id="3b232902-571f-471a-b8dc-365d81e19262" config-ref="HTTP_Listener_Global_Config" path="v1/cases/{nationalid}">
+			<http:error-response statusCode="#[vars.statusCode]" reasonPhrase="#[vars.statusMessage]" >
+				<http:body ><![CDATA[#[payload]]]></http:body>
+			</http:error-response>
+		</http:listener>
+		<ee:transform doc:name="Set CorrelationID And TransactionID" doc:id="9dd3dfde-4138-4ea3-8e7b-4df53ca69b1d" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="transactionId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.headers.'x-transaction-id' default uuid()]]></ee:set-variable>
+				<ee:set-variable variableName="correlationId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.headers.'x-correlation-id' default uuid()]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Start Get Case By SSN Logger" doc:id="f5c6d5d9-9a38-4803-938f-b25cdc1066dd" message='transactionID: #[vars.transactionId], correlationID: #[vars.correlationId], message: "started get covid case by ssn flow ":  #[payload]' />
+		<set-variable value="#[attributes.uriParams.nationalid]" doc:name="Set Variable" doc:id="10b3a642-2068-49a8-97ed-24a356c06e82" variableName="nationalid"/>
+		<db:select doc:name="Select Case by SSN" doc:id="3f618e59-fd90-4058-8c23-5b36adbe2822" config-ref="Database_Global_Config">
+			<db:sql ><![CDATA[select case_id, source, case_type, first_name, last_name, phone, email, date_of_birth, national_id, national_id_type, street_address, city, state, postal, country, create_date, update_date from cvd_case_master where national_id = :SSN]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{SSN: vars.nationalid}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="7d9e8052-9dfe-43a5-98ac-1a4aa4a34e05" >
+			<when expression="#[(sizeOf(payload)&gt;0)]">
+				<ee:transform doc:name="Set Success Response" doc:id="cae7eeed-686e-4f44-bb45-350b325ed44d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map (covidCase, indexOfCovidCase) -> {
+	caseID: covidCase.case_id,
+    source: covidCase.source,
+    caseType: covidCase.case_type,
+    firstName: covidCase.first_name,
+    lastName: covidCase.last_name,
+    phone: covidCase.phone,
+    email: covidCase.email,
+    dateOfBirth: covidCase.date_of_birth as String {format: "yyyy-MM-dd"},
+    nationalID: covidCase.national_id,
+    nationalIDType: covidCase.national_id_type,
+    address: {
+      streetAddress: covidCase.street_address,
+      city: covidCase.city,
+      state: covidCase.state,
+      postal: covidCase.postal,
+      country: covidCase.country
+    },
+    createDate: covidCase.create_date as String {format: "yyyy-MM-dd"},
+    updateDate: covidCase.update_date as String {format: "yyyy-MM-dd"}
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+			</ee:variables>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise CUSTOM:CASE_NOT_FOUND" doc:id="314d26b1-72a0-4c15-b104-ceadf640862f" type="CUSTOM:CASE_NOT_FOUND" description="The server has not found anything matching the Request-URI"/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="End Get Case By SSN Logger" doc:id="0e48c000-c286-4a29-87a5-fd824c66d173" message='transactionID: #[vars.transactionId], correlationID: #[vars.correlationId], message: "End get covid case by ssn flow ":  #[payload]' />
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f3231a1f-4bcc-4b96-a30d-0d7ca269aa80" type="CUSTOM:CASE_NOT_FOUND">
+				<ee:transform doc:name="Transform Message" doc:id="110f224e-123e-4dda-9e50-c7e8fb387774">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "code": 404,
+    "message": "Resource not found",
+    "description": error.description,
+    "dateTime": now(),
+    "transactionId": vars.transactionId
+}
+]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="statusCode" ><![CDATA[404]]></ee:set-variable>
+						<ee:set-variable variableName="statusMessage" ><![CDATA["Resource not found"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+
+			</on-error-propagate>
+		</error-handler>
+	
+</flow>
+	</mule>

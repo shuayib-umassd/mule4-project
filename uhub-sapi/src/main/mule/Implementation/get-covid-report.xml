@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="get-covid-reportFlow" doc:id="7e8706d9-fa77-47a7-bf24-60d49f1ce9d1" >
+		<http:listener doc:name="Listener" doc:id="ca9f0e9f-bfce-499d-8a2f-e51e4e719c85" config-ref="HTTP_Listener_Global_Config" path="v1/reports"/>
+		<ee:transform doc:name="Set CorrelationID And TransactionID" doc:id="1ada003d-bfe1-4873-945c-42bee437d718" >
+			<ee:message />
+			<ee:variables >
+				<ee:set-variable variableName="transactionId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.headers.'x-transaction-id' default uuid()]]></ee:set-variable>
+				<ee:set-variable variableName="correlationId" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.headers.'x-correlation-id' default uuid()]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Start Get Case Report Logger" doc:id="862d38c0-e8b6-4787-bf6b-00fdd7b31c1d" message='transactionID: #[vars.transactionId], correlationID: #[vars.correlationId], message: "started get case report flow ":  #[payload]' />
+		<ee:transform doc:name="Prepare DynamicQuery" doc:id="27abaf56-5504-46d0-9136-2a860e35669c" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="reportsDynamicQuery" ><![CDATA[%dw 2.0
+output text/plain
+var st = (attributes.queryParams.state default "") as String
+---
+if (!isEmpty(trim(st)))
+  "select count(*) as count, case_type, state from cvd_case_master where upper(state) = '" ++ upper(trim(st)) ++ "' group by case_type, state"
+else
+  "select count(*) as count, case_type, state from cvd_case_master group by case_type, state"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:select doc:name="Select Case Report" doc:id="616ae6cb-8baa-436e-8c46-fe337a0291a8" config-ref="Database_Global_Config" >
+			<db:sql ><![CDATA[#["$(vars.reportsDynamicQuery)"]]]></db:sql>
+		</db:select>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:name="Prepare Response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+fun vaccinatedByState(state) = (payload filter(($.STATE == state as String) and ($.CASE_TYPE == "vaccinated")) map {
+	COUNT: $.COUNT
+})[0]
+---
+((payload groupBy($.STATE) mapObject {
+	caseReports: {
+		state: $$,
+		reports: {
+			total: ($.COUNT reduce $ + $$) - (vaccinatedByState($$).COUNT as Number default 0),
+			($ orderBy($.CASE_TYPE) map {
+				($.CASE_TYPE): $.COUNT
+			})
+		}
+	}
+}).*caseReports) default []
+]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+		<logger level="INFO" doc:name="End Get Case Report Logger" doc:id="03f1a4ef-68eb-4839-8600-990fcdfe838d" message='transactionID: #[vars.transactionId], correlationID: #[vars.correlationId], message: "end get case report flow ":  #[payload]'/>
+	
+</flow>
+</mule>
