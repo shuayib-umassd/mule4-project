@@ -1,0 +1,23 @@
+%dw 2.0
+
+type auto_f069b00c_efb7_40f3_b6aa_41dc943aa971_Output_Variables_nationalID = {|
+  national_id?: String, 
+  street_address?: String, 
+  country?: String, 
+  city?: String, 
+  date_of_birth?: String, 
+  case_type?: String, 
+  last_name?: String, 
+  source?: String, 
+  national_id_type?: String, 
+  update_date?: String, 
+  create_by?: String, 
+  phone?: String, 
+  state?: String, 
+  postal?: String, 
+  create_date?: String, 
+  update_by?: String, 
+  first_name?: String, 
+  email?: String
+|}
+

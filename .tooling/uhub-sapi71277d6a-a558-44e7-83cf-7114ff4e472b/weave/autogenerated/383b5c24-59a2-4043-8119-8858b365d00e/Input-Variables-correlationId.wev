@@ -1,4 +1,0 @@
-%dw 2.0
-
-type auto_383b5c24_59a2_4043_8119_8858b365d00e_Input_Variables_correlationId = Any
-
