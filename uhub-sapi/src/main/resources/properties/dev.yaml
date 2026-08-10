@@ -1,0 +1,11 @@
+db:
+  host: bt4dr4kvwz7w2srvdjii-mysql.services.clever-cloud.com
+  port: "3306"
+  user: u6nqzow417srvbpk
+  database: bt4dr4kvwz7w2srvdjii
+  
+  pooling:
+    maxPoolSize: "2"
+    minPoolSize: "0"
+    maxWait: "30000"
+    minWait: "30000"
